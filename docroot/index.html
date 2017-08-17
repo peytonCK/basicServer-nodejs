@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>衣加物体识别测试数据展示</title>
+    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/jquery.lazyload.min.js"></script>
+    <script type="text/javascript" src="/template.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" sizes="32X32" href="/favicon.ico">
+</head>
+
+<body>
+    <section>
+        <header>
+            <h1 class="pageTitle">衣加物体识别测试数据展示</h1>
+        </header>
+        <hr/>
+        <!-- # bathtub 浴缸   bed 床  flume 水槽   closestool 马桶   stopcock 水龙头 sprinkler 花洒  washbowl 洗脸盆  bedstand 床头柜  drawers 五头柜  tvstand 电视柜 table 餐桌  desk  书桌  bathroomstand 浴室柜-->
+        <div class="categorys">
+            <span class="category" id="bathtub">浴缸</span>
+            <span class="category" id="bed">床</span>
+            <span class="category" id="flume">水槽</span>
+            <span class="category" id="closestool">马桶</span>
+            <span class="category" id="stopcock">水龙头</span>
+            <span class="category" id="sprinkler">花洒</span>
+            <span class="category" id="washbowl">盥洗盆</span>
+            <span class="category" id="bedstand">床头柜</span>
+            <span class="category" id="drawers">五头柜</span>
+            <span class="category" id="tvstand">电视柜</span>
+            <span class="category" id="table">餐桌</span>
+            <span class="category" id="desk">书桌</span>
+            <span class="category" id="bathroomstand">浴室柜</span>
+        </div>
+        <div id="items">
+        	<div class="emptyData">请先选择品类</div>
+        </div>
+    </section>
+    <script type="text/javascript">
+    var categoryData = {};
+    $(document).ready(function() {
+        $(".category").click(function() {
+            var category = $(this).attr('id');
+            if (!$(this).hasClass('current')) {
+                $('.category').removeClass('current');
+                $(this).addClass('current');
+                $.getJSON("detectDataJSONs/"+category + ".json", function(data) {　 //each循环 
+                    categoryData = data;
+                    //console.log(categoryData)
+                    renderCategoryData();
+                });
+            }
+
+        });
+    });
+
+    function renderCategoryData() {
+        if (categoryData) {
+        	$("#items").html("正在加载分析数据...");
+            let str = "";
+            $.each(categoryData, function(key, item) {
+                //console.log(key, item);
+                str += '<div class="imgItem"><div class="imgWrap">';
+                str += '<img class="bigImg" data-original="' + item.fileUrl + '" src = "http://few.idcool.com.cn/compress/img/transparent2.png" alt = "" />';
+                str += '<div class = "marks" >';
+                $.each(item.detectData, function(index, detect) {
+                    console.log(detect);
+                    let html = template("markItem", detect);
+                    str += html;
+                })
+                str += '</div></div> </div>';
+            })
+            $("#items").html(str);
+            //图片懒加载并在加载过程中做计算
+            $(".imgItem img").lazyload({
+                effect: "fadeIn",
+                failurelimit: 10,
+                threshold : 200,
+                load: function() {
+                    figureMarks(this);
+                }
+            });
+            //$(window).scroll();
+        } else {
+            alert("请先选择品类！");
+        }
+    }
+
+    function figureMarks(imgNode){
+    	let imgObj=$(imgNode);
+    	let marksObj=imgObj.next();
+    	marksObj.width(imgObj.width());
+    	marksObj.height(imgObj.height());
+		console.log($(imgObj).width(),$(imgObj).height());
+    }
+    </script>
+    <script id="markItem" type="text/html">
+        <div class="mark" style="left:{{object_bounding_box.x*100}}%;top:{{object_bounding_box.y*100}}%;width:{{object_bounding_box.width*100}}%;height:{{object_bounding_box.height*100}}%" title="{{object_confidence+"%"}}  {{object_name}}"><span class="confidence">{{object_confidence+"%"}}</span><span class="goods">{{object_name}}</span>
+        </div>
+    </script>
+</body>
+
+</html>
